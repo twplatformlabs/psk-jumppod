@@ -1,0 +1,7 @@
+policy.rego
+cosign.asc
+cosign.key
+*.asc
+*.pem
+Pipfile.lock
+.python-version

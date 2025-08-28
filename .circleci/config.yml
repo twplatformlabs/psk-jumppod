@@ -1,0 +1,110 @@
+---
+version: 2.1
+
+orbs:
+  executor-tools: twdps/executor-tools@5.0.0
+  op: twdps/onepassword@3.0.0
+  do: twdps/pipeline-events@5.2.0
+
+globals:
+  - &image ghcr.io/twplatformlabs/jumppod
+  - &context platform
+  - &shell op run --env-file op.env -- /bin/bash -eo pipefail
+
+on-push-main: &on-push-main
+  branches:
+    only: /main/
+  tags:
+    ignore: /.*/
+
+on-each-run: &on-each-run
+  branches:
+    only: /main/
+  tags:
+    only: /.*/
+
+on-tag-main: &on-tag-main
+  branches:
+    ignore: /.*/
+  tags:
+    only: /.*/
+
+commands:
+
+  set-signing-keys:
+    steps:
+      - op/write-to-file:
+          op-value: platform/svc-cosign-private-key/notesPlain
+          out-file: cosign.key
+      - op/write-to-file:
+          op-value: platform/svc-cosign-public-key/notesPlain
+          out-file: cosign.pub
+
+workflows:
+  build and test:
+    jobs:
+
+      - executor-tools/dev-release:
+          name: image build
+          context: *context
+          shell: *shell
+          image: *image
+          tag: edge
+          snyk-scan: true
+          snyk-severity-threshold: medium
+          snyk-organization: twplatformlabs
+          bats-test: false
+          bats-entry-point: /bin/bash
+          opencontainer-labels: true
+          security-scan-nofail: true
+          filters: *on-each-run
+
+      - executor-tools/publish:
+          name: release
+          context: *context
+          shell: *shell
+          image: *image
+          pull-tag: edge
+          release-tag: stable
+          sign-image: true
+          sbom: true
+          after-checkout:
+            - set-signing-keys
+          requires:
+            - image build
+          filters: *on-tag-main
+
+      - do/gh-release:
+          name: generate release notes
+          shell: *shell
+          context: *context
+          notes-from-file: release.md
+          include-commit-msg: true
+          upload-artifacts: true
+          artifact-folder: workspace
+          requires:
+            - release
+          filters: *on-tag-main
+
+  monthly build:
+    when:
+      equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
+    jobs:
+      - do/automated-tag:
+          tag-type: monthly-recurring
+          committer-email: twplatformlabs@gmail.com
+          committer-name: twplatformlabs-sa
+
+  schedule monthly build:
+    jobs:
+      - do/schedule-pipeline:
+          name: configure scheduled pipeline run for monthly general release
+          shell: *shell
+          context: *context
+          scheduled-pipeline-name: Monthly update release
+          scheduled-pipeline-description: |
+            Automatically build and release a current version of the image
+            using the YYYY.MM tag format.
+          hours-of-day: "[11]" # 11 am UTC = 6am Central
+          days-of-month: "[5]" # 5th of each month
+          filters: *on-push-main
