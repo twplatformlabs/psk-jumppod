@@ -23,7 +23,7 @@ SHELL ["/bin/bash", "-exo", "pipefail", "-c"]
 
 # Configured for automatic, monthly build using current package repository release versions.
 # Pinned package versions available using YYYY.MM tag.
-# hadolint ignore=DL3008
+# hadolint ignore=DL3008,DL3004,DL3027
 RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90forceyes && \
     echo 'DPkg::Options "--force-confnew";' >> /etc/apt/apt.conf.d/90forceyes && \
     apt update && apt-get install --no-install-recommends -y \
