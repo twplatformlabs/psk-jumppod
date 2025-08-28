@@ -7,7 +7,8 @@ orbs:
   do: twdps/pipeline-events@5.2.0
 
 globals:
-  - &image ghcr.io/twplatformlabs/jumppod
+  - &registry ghcr.io
+  - &image twplatformlabs/jumppod
   - &context platform
   - &shell op run --env-file op.env -- /bin/bash -eo pipefail
 
@@ -48,6 +49,7 @@ workflows:
           name: image build
           context: *context
           shell: *shell
+          registry: *registry
           image: *image
           tag: edge
           snyk-scan: true
@@ -63,6 +65,7 @@ workflows:
           name: release
           context: *context
           shell: *shell
+          registry: *registry
           image: *image
           pull-tag: edge
           release-tag: stable
