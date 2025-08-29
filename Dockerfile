@@ -13,9 +13,7 @@ LABEL org.opencontainers.image.created="%%CREATED%%" \
       org.opencontainers.image.base.name="%%BASE%%"
 
 ENV DEBIAN_FRONTEND=noninteractive
-
-ENV CLOUDSDK_PYTHON=/usr/bin/python3.12
-ENV PATH=/usr/local/google-cloud-sdk/bin:/home/jumppod/bin:/home/jumppod/.local/bin:$PATH \
+ENV PATH=/home/jumppod/bin:/home/jumppod/.local/bin:$PATH \
     LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
