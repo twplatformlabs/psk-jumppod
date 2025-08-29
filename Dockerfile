@@ -26,6 +26,7 @@ SHELL ["/bin/bash", "-exo", "pipefail", "-c"]
 # hadolint ignore=DL3008,DL3004,DL3027
 RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90forceyes && \
     echo 'DPkg::Options "--force-confnew";' >> /etc/apt/apt.conf.d/90forceyes && \
+    echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
     apt update && apt-get install --no-install-recommends -y \
         build-essential \
         tzdata \
@@ -81,11 +82,18 @@ RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90forceyes && \
     sudo -u jumppod bash -c "echo 'allow-loopback-pinentry' > /home/jumppod/.gnupg/gpg-agent.conf" && \
     sudo -u jumppod bash -c "echo 'pinentry-mode loopback' > /home/jumppod/.gnupg/gpg.conf" && \
     chmod 700 /home/jumppod/.gnupg && chmod 600 /home/jumppod/.gnupg/* && \
+    download_version=$(curl -s https://api.github.com/repos/etcd-io/etcd/releases/latest | grep '"tag_name":' | head -n1 | cut -d '"' -f4) && \
+    download_url="https://github.com/etcd-io/etcd/releases/download/${download_version}/etcd-${download_version}-linux-amd64.tar.gz" && \
+    curl -L "$download_url" -o "etcd-${download_version}-linux-amd64.tar.gz" && \
+    tar xzf "etcd-${download_version}-linux-amd64.tar.gz" && \
+    sudo mv "etcd-${download_version}-linux-amd64/etcdctl" /usr/local/bin/etcdctl && \
+    rm -rf "etcd-${download_version}-linux-amd64" && rm "etcd-${download_version}-linux-amd64.tar.gz" && \
+    current_version=$(curl -s https://api.github.com/repos/istio/istio/releases/latest | jq -r '.tag_name') && \
+    curl -L https://istio.io/downloadIstio | ISTIO_VERSION="${current_version}" sh - && \
+    sudo cp "istio-${current_version}/bin/istioctl" /usr/local/bin/istioctl && \
+    rm -rf "istio-${current_version}" && \
     sudo apt-get clean && rm -rf /var/lib/apt/lists/*
 
 USER jumppod
 
 WORKDIR /home/jumppod
-
-#     sudo pip install --no-cache-dir --break-system-packages --ignore-installed \
-#              awscli && \
