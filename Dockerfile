@@ -55,6 +55,7 @@ RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90forceyes && \
         dnsutils \
         apt-utils \
         nmap \
+        traceroute \
         iputils-ping \
         ca-certificates \
         python3-dev \
