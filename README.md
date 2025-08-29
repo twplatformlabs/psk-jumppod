@@ -8,14 +8,56 @@
 </div>
 <br />
 
-Based on Ubuntu:24.04, with many useful packages already installed, such as:  
--
+Based on Ubuntu:24.04, with many useful packages already installed, such as:
+- build-essentials, gcc, cmake, make
+- curl, wget, gnupg
+- tar, gzip, unzip, zip, bzip2
+- git, git-lfs, gh (github cli)
+- python3, jq
+- dnsutils, nmap, iputil-ping, apt-utils
+- kubectl, etcdctl, istioctl
+- trivy
 
 _See the build.log for a full list_
 
+You can launch directly onto a particular node using the kubectl debug command.  
+Example on EKS:  
+```bash
+kubectl get nodes
 
+NAME                                           STATUS   ROLES    AGE   VERSION
+ip-192-168-51-15.us-east-2.compute.internal    Ready    <none>   20m   v1.29.3-eks-810597c
+ip-192-168-64-199.us-east-2.compute.internal   Ready    <none>   20m   v1.29.3-eks-810597c
 
-**signature**. Images are signed using `cosign`. Verify images using the twplatformlabs [public key](https://raw.githubusercontent.com/twplatformlabs/static/master/cosign.pub).  
+k debug node/ip-192-168-51-15.us-east-2.compute.internal -it \
+  --profile=general \
+  --name=jumppod \
+  --image=ghcr.io/twplatformlabs/jumppod:stable
+```
+You will need to delete the resulting pod to clean up.  
+
+Can be deployed as simple pod resource:  
+```yaml
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: jumppod
+  namespace: default
+spec:
+  containers:
+    - name: jumppod
+      image: ghcr.io/twplatformlabs/jumppod:edge
+      command: ["sleep", "3600"]
+      imagePullPolicy: Always
+```
+Then access a shell using:  
+```bash
+kubectl exec -it jumppod -- /bin/bash
+```
+The example folder has some other configurations that can provide more access.  
+
+**signature**. The jumppod is signed using `cosign`. Verify images using the twplatformlabs [public key](https://raw.githubusercontent.com/twplatformlabs/static/master/cosign.pub).  
 ```bash
 cosign verify --key cosign.pub ghcr.io/twplatformlabs/jumppod:2025.04
 ```  
@@ -26,12 +68,11 @@ validate attestation:
 cosign verify-attestation --type https://spdx.dev/Document --key cosign.pub ghcr.io/twplatformlabs/jumppod:2025.04
 ```
 download manifest and extract bill of materials (sbom.spdx.json):  
-```
+```bash
 cosign download attestation ghcr.io/twplatformlabs/jumppod:2025.04 > attestation.json  
 jq -r '.payload' attestation.json | base64 -d > envelope.json
 jq '.predicate' envelope.json > sbom.spdx.json
 ```
-_Note. Dockerhub Scout does not appear to support non-docker attestations_  
 
 ### Tagging Scheme
 
