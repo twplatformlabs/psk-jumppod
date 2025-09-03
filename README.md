@@ -12,9 +12,10 @@ Based on Ubuntu:24.04, with many useful packages already installed, such as:
 - build-essentials, gcc, cmake, make
 - curl, wget, gnupg
 - tar, gzip, unzip, zip, bzip2
-- git, git-lfs, gh (github cli)
+- git, git-lfs, gh (github cli), vim
 - python3, jq
 - dnsutils, nmap, iputil-ping, apt-utils
+- gcloud cli, aws cli
 - kubectl, etcdctl, istioctl
 - trivy
 

@@ -70,6 +70,11 @@
   [[ "${output}" =~ "Syntax: gpg" ]]
 }
 
+@test "vim available" {
+  run bash -c "docker exec container-test vim --help"
+  [[ "${output}" =~ "Usage: vim" ]]
+}
+
 @test "bash available" {
   run bash -c "docker exec container-test bash --help"
   [[ "${output}" =~ "Usage:	bash" ]]
@@ -131,7 +136,17 @@
   [[ "${output}" =~ "Istio configuration command line utility" ]]
 }
 
+@test "gcloud available" {
+  run bash -c "docker exec container-test gcloud version"
+  [[ "${output}" =~ "Google Cloud SDK" ]]
+}
+
 @test "ca-certificates installed" {
   run bash -c "docker exec container-test ls /etc/ssl/certs/"
   [[ "${output}" =~ "DigiCert_Assured_ID_Root_CA" ]]
+}
+
+@test "awscli available" {
+  run bash -c "docker exec container-test aws --help"
+  [[ "${output}" =~ "usage: aws" ]]
 }

@@ -12,8 +12,9 @@ LABEL org.opencontainers.image.created="%%CREATED%%" \
       org.opencontainers.image.description="Ubuntu-based image containing common Kubernetes and networking tools as kubectl exec target" \
       org.opencontainers.image.base.name="%%BASE%%"
 
+ENV CLOUDSDK_PYTHON=/usr/bin/python3.12
 ENV DEBIAN_FRONTEND=noninteractive
-ENV PATH=/home/jumppod/bin:/home/jumppod/.local/bin:$PATH \
+ENV PATH=/usr/local/google-cloud-sdk/bin:/home/jumppod/bin:/home/jumppod/.local/bin:$PATH \
     LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
@@ -50,6 +51,7 @@ RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90forceyes && \
         jq \
         gnupg \
         gnupg-agent \
+        vim \
         dnsutils \
         apt-utils \
         nmap \
@@ -81,6 +83,12 @@ RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90forceyes && \
     sudo -u jumppod bash -c "echo 'allow-loopback-pinentry' > /home/jumppod/.gnupg/gpg-agent.conf" && \
     sudo -u jumppod bash -c "echo 'pinentry-mode loopback' > /home/jumppod/.gnupg/gpg.conf" && \
     chmod 700 /home/jumppod/.gnupg && chmod 600 /home/jumppod/.gnupg/* && \
+    curl -SLO "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz" && \
+    sudo tar -xvzf "google-cloud-cli-linux-x86_64.tar.gz" -C /usr/local && \
+    rm "google-cloud-cli-linux-x86_64.tar.gz" && \
+    sudo chmod +x /usr/local/google-cloud-sdk/install.sh && \
+    sudo chown -R "$(whoami)" /usr/local/google-cloud-sdk && \
+    sudo bash -c "/usr/local/google-cloud-sdk/install.sh -q" && \
     download_version=$(curl -s https://api.github.com/repos/etcd-io/etcd/releases/latest | grep '"tag_name":' | head -n1 | cut -d '"' -f4) && \
     download_url="https://github.com/etcd-io/etcd/releases/download/${download_version}/etcd-${download_version}-linux-amd64.tar.gz" && \
     curl -L "$download_url" -o "etcd-${download_version}-linux-amd64.tar.gz" && \
@@ -91,6 +99,9 @@ RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90forceyes && \
     curl -L https://istio.io/downloadIstio | ISTIO_VERSION="${current_version}" sh - && \
     sudo cp "istio-${current_version}/bin/istioctl" /usr/local/bin/istioctl && \
     rm -rf "istio-${current_version}" && \
+    gcloud components install gke-gcloud-auth-plugin -q && \
+    sudo pip install --break-system-packages \
+             awscli && \
     sudo apt-get clean && rm -rf /var/lib/apt/lists/*
 
 USER jumppod
