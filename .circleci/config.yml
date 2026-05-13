@@ -4,7 +4,7 @@ version: 2.1
 orbs:
   executor-tools: twdps/executor-tools@5.0.0
   op: twdps/onepassword@3.0.0
-  do: twdps/pipeline-events@5.2.0
+  do: twdps/pipeline-events@5.5.0
 
 globals:
   - &registry ghcr.io
